@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
-from routers import users
+from routers import users, projects
 
 
 # Load environment variables
@@ -28,7 +28,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(users.router)
-
+app.include_router(projects.router)
 # Health check endpoints
 @app.get("/")
 async def root():

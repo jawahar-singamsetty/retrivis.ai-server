@@ -296,8 +296,7 @@ async def update_project_settings(
             "data": result.data[0]
         }
 
-    except HTTPException:
-        raise
+
     except Exception as e:
         raise HTTPException(
             status_code=500, 

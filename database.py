@@ -26,5 +26,5 @@ s3_client = boto3.client(
     region_name=os.getenv("AWS_REGION")
 )
 
-BUCKET_NAME = os.getenv("S3_BUSCKET_NAME")
+BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 

@@ -4,11 +4,21 @@ from database import BUCKET_NAME, s3_client, supabase
 from unstructured.partition.pdf import partition_pdf
 from unstructured.partition.docx import partition_docx
 from unstructured.partition.html import partition_html
+from unstructured.partition.pptx import partition_pptx
+from unstructured.partition.xlsx import partition_xlsx
+from unstructured.partition.md import partition_md
+from unstructured.partition.text import partition_text
+from unstructured.partition.html import partition_html
+from unstructured.partition.docx import partition_docx
 from unstructured.chunking.title import chunk_by_title
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.messages import HumanMessage
 import os
+from scrapingbee import ScrapingBeeClient
 import tempfile
+
+# Initialize ScrapingBee client
+scrapingbee_client = ScrapingBeeClient(api_key=os.getenv("SCRAPINGBEE_API_KEY"))
 
 logger = get_task_logger(__name__)
 
@@ -106,9 +116,21 @@ def download_and_partition(document_id: str, document: dict):
 
     source_type = document.get("source_type", "file")
 
+
     if source_type == "url":
         # Crawl URL 
-        pass
+        url = document["source_url"] 
+          
+        # Fetch content with ScrapingBee
+        response = scrapingbee_client.get(url)
+            
+        # Save to temp file
+        temp_dir = tempfile.gettempdir()
+        temp_file = os.path.join(temp_dir, f"{document_id}.html")
+        with open(temp_file, 'wb') as f:
+            f.write(response.content)
+            
+        elements = partition_document(temp_file, "html", source_type="url")
 
     else:
         # Handle file processing
@@ -117,22 +139,7 @@ def download_and_partition(document_id: str, document: dict):
         filename = document["filename"]
         file_type = filename.split(".")[-1].lower()
 
-        #  Download to a temporary location 
-        temp_dir = tempfile.gettempdir()
-        temp_file = os.path.join(temp_dir, f"{document_id}.{file_type}")
-        logger.info(f"📥 Downloading from S3: {s3_key}")
-
-        s3_client.download_file(BUCKET_NAME, s3_key, temp_file)
-        logger.info(f"✅ Downloaded to {temp_file}")
-
-    try:
-        elements = partition_document(temp_file, file_type, source_type="file")
         logger.info(f"✅ Partitioned document into {len(elements)} elements")
-    finally:
-        # ✅ Fix: Always clean up temp file even if partitioning fails
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
-                logger.info(f"🗑️ Cleaned up temp file")
 
     elements_summary = analyze_elements(elements)
     logger.info(f"📊 Elements summary: {elements_summary}")
@@ -143,6 +150,10 @@ def download_and_partition(document_id: str, document: dict):
         }
     })
 
+# ✅ Fix: Always clean up temp file even if partitioning fails
+    if os.path.exists(temp_file):
+        os.remove(temp_file)
+        logger.info(f"🗑️ Cleaned up temp file")
 
     return elements
 
@@ -154,9 +165,11 @@ def partition_document(temp_file: str, file_type: str, source_type: str = "file"
     logger.info(f"🔍 Partitioning {file_type} file...")
 
     if source_type == "url": 
-        pass
+         return partition_html(
+            filename=temp_file
+        )
 
-    if file_type == "pdf":
+    elif file_type == "pdf":
         return partition_pdf(
             filename=temp_file,  # Path to your PDF file
             strategy="hi_res", # Use the most accurate (but slower) processing method of extraction
@@ -164,6 +177,42 @@ def partition_document(temp_file: str, file_type: str, source_type: str = "file"
             extract_image_block_types=["Image"], # Grab images found in the PDF
             extract_image_block_to_payload=True # Store images as base64 data you can actually use
         )
+
+    elif file_type == 'docx':
+        return partition_docx(
+            filename=temp_file,
+            strategy="hi_res",
+            infer_table_structure=True,
+            extract_image_block_types=["Image"], # Grab images found in the PDF
+            extract_image_block_to_payload=True # Store images as base64 data you can actually use
+        )
+
+    elif file_type == 'pptx':
+        return partition_pptx(
+            filename=temp_file,
+            strategy="hi_res",
+            infer_table_structure=True, 
+            extract_image_block_types=["Image"], # Grab images found in the PDF
+            extract_image_block_to_payload=True # Store images as base64 data you can actually use
+        )
+
+    elif file_type == 'xlsx':
+        return partition_xlsx(
+            filename=temp_file,
+            strategy="hi_res",
+            infer_table_structure=True
+        )
+
+    elif file_type == "txt":
+        return partition_text(
+            filename=temp_file
+        )
+    
+    elif file_type == "md":
+        return partition_md(
+            filename=temp_file
+        )
+    
 
 
 

@@ -5960,6 +5960,21 @@ doc = ["intersphinx_registry", "jupyterlite-pyodide-kernel", "jupyterlite-sphinx
 test = ["Cython", "array-api-strict (>=2.3.1)", "asv", "gmpy2", "hypothesis (>=6.30)", "meson", "mpmath", "ninja ; sys_platform != \"emscripten\"", "pooch", "pytest (>=8.0.0)", "pytest-cov", "pytest-timeout", "pytest-xdist", "scikit-umfpack", "threadpoolctl"]
 
 [[package]]
+name = "scrapingbee"
+version = "2.0.2"
+description = "ScrapingBee Python SDK"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "scrapingbee-2.0.2-py3-none-any.whl", hash = "sha256:28d1c9b250917e45924d8a21cf7d55776c701d6d1c5283aabf3ef1911462a291"},
+    {file = "scrapingbee-2.0.2.tar.gz", hash = "sha256:312a2f2beab03eb687e568c3688533c44e543104eea82f18a4183f9ce1042e0f"},
+]
+
+[package.dependencies]
+requests = "*"
+
+[[package]]
 name = "setuptools"
 version = "82.0.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
@@ -7786,4 +7801,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "584882ec0fc258be04e9825c9a5c709fb06ba0718bcf5a8923cfde4e6325f674"
+content-hash = "fb478d32de3fe367344612ac64ee26da0e3de01f6cdd4e94e8453ad2067974d8"

@@ -115,31 +115,44 @@ def download_and_partition(document_id: str, document: dict):
     logger.info(f"⬇️ Downloading and partitioning document {document_id}")
 
     source_type = document.get("source_type", "file")
+    temp_file = None
+    elements = []
 
-
-    if source_type == "url":
-        # Crawl URL 
-        url = document["source_url"] 
-          
-        # Fetch content with ScrapingBee
-        response = scrapingbee_client.get(url)
+    try:
+        if source_type == "url":
+            url = document["source_url"]
             
-        # Save to temp file
-        temp_dir = tempfile.gettempdir()
-        temp_file = os.path.join(temp_dir, f"{document_id}.html")
-        with open(temp_file, 'wb') as f:
-            f.write(response.content)
+            response = scrapingbee_client.get(url)
             
-        elements = partition_document(temp_file, "html", source_type="url")
+            temp_dir = tempfile.gettempdir()
+            temp_file = os.path.join(temp_dir, f"{document_id}.html")
+            with open(temp_file, 'wb') as f:
+                f.write(response.content)
+            
+            elements = partition_document(temp_file, "html", source_type="url")
 
-    else:
-        # Handle file processing
-        
-        s3_key = document["s3_key"]
-        filename = document["filename"]
-        file_type = filename.split(".")[-1].lower()
+        else:
+            # Handle file processing
+            s3_key = document["s3_key"]
+            filename = document["filename"]
+            file_type = filename.split(".")[-1].lower()
+
+            temp_dir = tempfile.gettempdir()
+            temp_file = os.path.join(temp_dir, f"{document_id}.{file_type}")
+
+            # Download from S3
+            logger.info(f"⬇️ Downloading {filename} from S3...")
+            s3_client.download_file(BUCKET_NAME, s3_key, temp_file)
+            logger.info(f"✅ Downloaded to {temp_file}")
+
+            elements = partition_document(temp_file, file_type)
 
         logger.info(f"✅ Partitioned document into {len(elements)} elements")
+
+    finally:
+        if temp_file and os.path.exists(temp_file):
+            os.remove(temp_file)
+            logger.info(f"🗑️ Cleaned up temp file")
 
     elements_summary = analyze_elements(elements)
     logger.info(f"📊 Elements summary: {elements_summary}")
@@ -149,11 +162,6 @@ def download_and_partition(document_id: str, document: dict):
             "elements_found": elements_summary
         }
     })
-
-# ✅ Fix: Always clean up temp file even if partitioning fails
-    if os.path.exists(temp_file):
-        os.remove(temp_file)
-        logger.info(f"🗑️ Cleaned up temp file")
 
     return elements
 

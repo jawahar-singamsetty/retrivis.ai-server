@@ -23,7 +23,7 @@ router = APIRouter(tags=["projectRoutes"])
   
 """
 
-
+@router.get("")
 @router.get("/")
 async def get_projects(current_user_clerk_id: str = Depends(get_current_user_clerk_id)):
     """
@@ -55,6 +55,7 @@ async def get_projects(current_user_clerk_id: str = Depends(get_current_user_cle
         )
 
 
+@router.post("")
 @router.post("/")
 async def create_project(
     project_data: ProjectCreate,
@@ -134,6 +135,7 @@ async def create_project(
         )
 
 
+@router.delete("")
 @router.delete("/{project_id}")
 async def delete_project(
     project_id: str, current_user_clerk_id: str = Depends(get_current_user_clerk_id)
@@ -194,6 +196,7 @@ async def delete_project(
         )
 
 
+@router.get("")
 @router.get("/{project_id}")
 async def get_project(
     project_id: str, current_user_clerk_id: str = Depends(get_current_user_clerk_id)
@@ -234,6 +237,7 @@ async def get_project(
         )
 
 
+@router.get("")
 @router.get("/{project_id}/chats")
 async def get_project_chats(
     project_id: str, current_user_clerk_id: str = Depends(get_current_user_clerk_id)
@@ -272,6 +276,7 @@ async def get_project_chats(
         )
 
 
+@router.get("")
 @router.get("/{project_id}/settings")
 async def get_project_settings(
     project_id: str, current_user_clerk_id: str = Depends(get_current_user_clerk_id)
@@ -312,6 +317,7 @@ async def get_project_settings(
         )
 
 
+@router.put("")
 @router.put("/{project_id}/settings")
 async def update_project_settings(
     project_id: str,
@@ -385,6 +391,7 @@ async def update_project_settings(
         )
 
 
+@router.post("")
 @router.post("/{project_id}/chats/{chat_id}/messages")
 async def send_message(
     project_id: str,

@@ -5,6 +5,7 @@ from src.services.supabase import supabase
 router = APIRouter(tags=["userRoutes"])
 
 
+@router.post("")
 @router.post("/create")
 async def create_user(clerk_webhook_data: dict):
     """

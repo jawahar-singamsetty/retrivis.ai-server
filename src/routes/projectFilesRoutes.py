@@ -22,7 +22,7 @@ router = APIRouter(tags=["projectFilesRoutes"])
   - GET `/{project_id}/files/{file_id}/chunks` ~ Get project document chunks
 """
 
-
+@router.get("")
 @router.get("/{project_id}/files")
 async def get_project_files(
     project_id: str, current_user_clerk_id: str = Depends(get_current_user_clerk_id)
@@ -61,6 +61,7 @@ async def get_project_files(
         )
 
 
+@router.post("")
 @router.post("/{project_id}/files/upload-url")
 async def get_upload_presigned_url(
     project_id: str,
@@ -163,6 +164,7 @@ async def get_upload_presigned_url(
         )
 
 
+@router.post("")
 @router.post("/{project_id}/files/confirm")
 async def confirm_file_upload_to_s3(
     project_id: str,
@@ -250,6 +252,7 @@ async def confirm_file_upload_to_s3(
         )
 
 
+@router.post("")
 @router.post("/{project_id}/urls")
 async def process_url(
     project_id: str,
@@ -339,6 +342,7 @@ async def process_url(
         )
 
 
+@router.delete("")
 @router.delete("/{project_id}/files/{file_id}")
 async def delete_project_document(
     project_id: str,
@@ -405,6 +409,7 @@ async def delete_project_document(
         )
 
 
+@router.get("")
 @router.get("/{project_id}/files/{file_id}/chunks")
 async def get_project_document_chunks(
     project_id: str,

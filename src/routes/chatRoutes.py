@@ -14,7 +14,7 @@ router = APIRouter(tags=["chatRoutes"])
 
 """
 
-
+@router.post("")
 @router.post("/")
 async def create_chat(
     chat: ChatCreate, current_user_clerk_id: str = Depends(get_current_user_clerk_id)
@@ -56,6 +56,7 @@ async def create_chat(
         )
 
 
+@router.delete("")
 @router.delete("/{chat_id}")
 async def delete_chat(
     chat_id: str, current_user_clerk_id: str = Depends(get_current_user_clerk_id)
@@ -96,6 +97,7 @@ async def delete_chat(
         )
 
 
+@router.get("")
 @router.get("/{chat_id}")
 async def get_chat(
     chat_id: str, current_user_clerk_id: str = Depends(get_current_user_clerk_id)

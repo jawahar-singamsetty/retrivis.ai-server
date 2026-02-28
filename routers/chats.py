@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from database import supabase
 from auth import get_current_user
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from typing import List, Dict, Tuple
+
 
 # Initialize LLM for summarization
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
@@ -63,7 +64,7 @@ async def delete_chat(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail = f"Failed to delete chat: {str(e)}")
-
+    
 
 @router.get("/api/chats/{chat_id}")
 async def get_chat(
@@ -92,7 +93,6 @@ async def get_chat(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get chat: {str(e)}")
-
 
 
 def load_project_settings(project_id: str) -> dict:
@@ -128,6 +128,127 @@ def vector_search(query: str, document_ids: List[str], settings: dict) -> List[D
     }).execute()
     
     return result.data if result.data else []
+
+def rrf_rank_and_fuse(search_results_list: List[List[Dict]], weights: List[float] = None, k: int = 60) -> List[Dict]:
+    """RRF (Reciprocal Rank Fusion) ranking"""
+    if not search_results_list or not any(search_results_list):
+        return []
+    
+    if weights is None:
+        weights = [1.0 / len(search_results_list)] * len(search_results_list)
+    
+    chunk_scores = {}
+    all_chunks = {}
+    
+    for search_idx, results in enumerate(search_results_list):
+        weight = weights[search_idx]
+        
+        for rank, chunk in enumerate(results):
+            chunk_id = chunk.get('id')
+            if not chunk_id:
+                continue
+            
+            rrf_score = weight * (1.0 / (k + rank + 1))
+            
+            if chunk_id in chunk_scores:
+                chunk_scores[chunk_id] += rrf_score
+            else:
+                chunk_scores[chunk_id] = rrf_score
+                all_chunks[chunk_id] = chunk
+    
+    sorted_chunk_ids = sorted(chunk_scores.keys(), key=lambda cid: chunk_scores[cid], reverse=True)
+    return [all_chunks[chunk_id] for chunk_id in sorted_chunk_ids]
+
+def hybrid_search(query: str, document_ids: List[str], settings: dict) -> List[Dict]:
+    """Execute hybrid search by combining vector and keyword results"""
+    # Get results from both search methods
+    vector_results = vector_search(query, document_ids, settings)
+    keyword_results = keyword_search(query, document_ids, settings)
+
+    print(f"📈 Vector search returned: {len(vector_results)} chunks")
+    print(f"📈 Keyword search returned: {len(keyword_results)} chunks")
+    
+    # Combine using RRF with configured weights
+    return rrf_rank_and_fuse(
+        [vector_results, keyword_results], 
+        [settings['vector_weight'], settings['keyword_weight']]
+    )
+
+class QueryVariations(BaseModel):
+    queries: List[str]
+
+def generate_query_variations(original_query: str, num_queries: int = 3) -> List[str]:
+    """Generate query variations using LLM"""
+    system_prompt = f"""Generate {num_queries-1} alternative ways to phrase this question for document search. Use different keywords and synonyms while maintaining the same intent. Return exactly {num_queries-1} variations."""
+
+    try:
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=f"Original query: {original_query}")
+        ]
+        
+        structured_llm = llm.with_structured_output(QueryVariations)
+        result = structured_llm.invoke(messages)
+        
+        return [original_query] + result.queries[:num_queries-1]
+    except Exception:
+        return [original_query]
+
+
+def keyword_search(query: str, document_ids: List[str], settings: dict) -> List[Dict]:
+    """Execute keyword search"""
+    result = supabase.rpc('keyword_search_document_chunks', {
+        'query_text': query,
+        'filter_document_ids': document_ids,
+        'chunks_per_search': settings['chunks_per_search']
+    }).execute()
+    
+    return result.data if result.data else []
+
+
+def validate_context(texts: List[str], images: List[str], tables: List[str], citations: List[Dict]) -> None:
+    """Validate and print context data in a readable format"""
+    print("\n" + "="*80)
+    print("📦 CONTEXT VALIDATION")
+    print("="*80)
+    
+    # Texts - SHOW FULL TEXT
+    print(f"\n📝 TEXTS: {len(texts)} chunks")
+    for i, text in enumerate(texts, 1):
+        print(f"\n{'='*80}")
+        print(f"CHUNK [{i}] - {len(text)} characters")
+        print(f"{'='*80}")
+        print(text)  # ✅ Full text, no truncation
+        print(f"{'='*80}\n")
+    
+    # Images
+    print(f"\n🖼️  IMAGES: {len(images)}")
+    for i, img in enumerate(images, 1):
+        img_preview = str(img)[:60] + ('...' if len(str(img)) > 60 else '')
+        print(f"  [{i}] {img_preview}")
+    
+    # Tables
+    print(f"\n📊 TABLES: {len(tables)}")
+    for i, table in enumerate(tables, 1):
+        if isinstance(table, dict):
+            rows = len(table.get('rows', []))
+            cols = len(table.get('headers', []))
+            print(f"  [{i}] {rows} rows × {cols} cols")
+        else:
+            print(f"  [{i}] Type: {type(table).__name__}")
+    
+    # Citations
+    print(f"\n📚 CITATIONS: {len(citations)}")
+    for i, cite in enumerate(citations, 1):
+        chunk_id = cite['chunk_id'][:8] if cite.get('chunk_id') else 'N/A'
+        print(f"  [{i}] {cite['filename']} (pg.{cite['page']}) | chunk: {chunk_id}...")
+    
+    # Summary
+    total_chars = sum(len(text) for text in texts)
+    print(f"\n{'='*80}")
+    print(f"✅ Total: {len(texts)} texts ({total_chars:,} chars), {len(images)} images, {len(tables)} tables, {len(citations)} citations")
+    print("="*80 + "\n")
+
 
 
 def build_context(chunks: List[Dict]) -> Tuple[List[str], List[str], List[str], List[Dict]]:
@@ -182,49 +303,6 @@ def build_context(chunks: List[Dict]) -> Tuple[List[str], List[str], List[str], 
             })
     
     return texts, images, tables, citations
-
-def validate_context(texts: List[str], images: List[str], tables: List[str], citations: List[Dict]) -> None:
-    """Validate and print context data in a readable format"""
-    print("\n" + "="*80)
-    print("📦 CONTEXT VALIDATION")
-    print("="*80)
-    
-    # Texts - SHOW FULL TEXT
-    print(f"\n📝 TEXTS: {len(texts)} chunks")
-    for i, text in enumerate(texts, 1):
-        print(f"\n{'='*80}")
-        print(f"CHUNK [{i}] - {len(text)} characters")
-        print(f"{'='*80}")
-        print(text)  # ✅ Full text, no truncation
-        print(f"{'='*80}\n")
-    
-    # Images
-    print(f"\n🖼️  IMAGES: {len(images)}")
-    for i, img in enumerate(images, 1):
-        img_preview = str(img)[:60] + ('...' if len(str(img)) > 60 else '')
-        print(f"  [{i}] {img_preview}")
-    
-    # Tables
-    print(f"\n📊 TABLES: {len(tables)}")
-    for i, table in enumerate(tables, 1):
-        if isinstance(table, dict):
-            rows = len(table.get('rows', []))
-            cols = len(table.get('headers', []))
-            print(f"  [{i}] {rows} rows × {cols} cols")
-        else:
-            print(f"  [{i}] Type: {type(table).__name__}")
-    
-    # Citations
-    print(f"\n📚 CITATIONS: {len(citations)}")
-    for i, cite in enumerate(citations, 1):
-        chunk_id = cite['chunk_id'][:8] if cite.get('chunk_id') else 'N/A'
-        print(f"  [{i}] {cite['filename']} (pg.{cite['page']}) | chunk: {chunk_id}...")
-    
-    # Summary
-    total_chars = sum(len(text) for text in texts)
-    print(f"\n{'='*80}")
-    print(f"✅ Total: {len(texts)} texts ({total_chars:,} chars), {len(images)} images, {len(tables)} tables, {len(citations)} citations")
-    print("="*80 + "\n")
 
 
 def prepare_prompt_and_invoke_llm(
@@ -338,9 +416,10 @@ def prepare_prompt_and_invoke_llm(
     
     return response.content
 
+
+
 class SendMessageRequest(BaseModel):
     content: str
-
 
 @router.post("/api/projects/{project_id}/chats/{chat_id}/messages")
 async def send_message(
@@ -366,43 +445,84 @@ async def send_message(
             "clerk_id": clerk_id
         }).execute()
         
-        user_message = user_message_result.data[0]
-        print(f"✅ User message saved: {user_message['id']}")
+        user_message = user_message_result.data[0] 
+        print(f"✅ User message saved: {user_message['id']}") 
         
-        # 2. Load project settings
-        # We need settings to know: chunk size, similarity threshold, etc.
-        settings = load_project_settings(project_id)
+        # 2. Load project settings 
+        settings = load_project_settings(project_id) 
         
-        # 3. Get document IDs for this project
-        # This narrows our search scope to only documents uploaded to this specific project
-        document_ids = get_document_ids(project_id)
+        # 3. Get document IDs for this project 
+        document_ids = get_document_ids(project_id) 
+        
+        
+        strategy = settings['rag_strategy']
+        print(f"\n🔍 RAG STRATEGY: {strategy.upper()}")
+        
+        # 4. Perform search using PostgreSQL functions 
+        if strategy == 'basic':
+            chunks = vector_search(message, document_ids, settings) 
+            print(f"✅ Retrieved {len(chunks)} relevant chunks from vector search") 
 
-        
-        # 4. Generate query embedding
-        # 5. Perform vector search using the RPC function
-        # Search through the chunks to find the most relevant chunks for answering the question
-        chunks = vector_search(message, document_ids, settings)
-        print(f"✅ Retrieved {len(chunks)} relevant chunks from vector search")
-        
-        # 6. Build context from retrieved chunks
-        # Format the retrieved chunks into a structured context with citations
-        texts, images, tables, citations = build_context(chunks)
-        validate_context(texts, images, tables, citations)
+        elif strategy == 'hybrid':
+            print("📈 Executing: Hybrid Search (Vector + Keyword)") 
+            chunks = hybrid_search(message, document_ids, settings) 
+            print(f"📈 Hybrid search returned: {len(chunks)} chunks") 
+
+        elif strategy == "multi-query-vector":
+            print(f"📈 Executing: Multi-Query Vector Search ({settings['number_of_queries']} queries)")
+            queries = generate_query_variations(message, settings['number_of_queries'])
+            print(f"🔄 Generated queries: {queries}")
+            all_results = []
+            for i, q in enumerate(queries):
+                results = vector_search(q, document_ids, settings)
+                print(f"📈 Query {i+1} '{q}' returned: {len(results)} chunks")
+                all_results.append(results)
+            chunks = rrf_rank_and_fuse(all_results)
+            print(f"🔗 RRF fusion returned: {len(chunks)} chunks")
+
+        elif strategy == 'multi-query-hybrid':
+            print(f"📈 Executing: Multi-Query Hybrid Search ({settings['number_of_queries']} queries, Vector + Keyword)")
+            queries = generate_query_variations(message, settings['number_of_queries'])
+            print(f"🔄 Generated queries: {queries}")
+            
+            # Stage 1: Per-query hybrid fusion
+            all_hybrid_results = []
+            for i, q in enumerate(queries):
+                print(f"\n  Query {i+1}: '{q}'")
                 
-        # 7. Build system prompt with injected context
-        # Add the retrieved document context to the system prompt so the LLM can answer based on the documents
-        print(f"🤖 Preparing context and calling LLM...")
-        ai_response = prepare_prompt_and_invoke_llm(
-            user_query=message,
-            texts=texts,
-            images=images,
-            tables=tables
-        )
-               
-        # 8. Save AI message with citations to database
-        # Store the AI's response along with citations
-        print(f"💾 Saving AI message...")
+                # Use the existing hybrid_search function which handles weights
+                hybrid_results = hybrid_search(q, document_ids, settings)
+                
+                print(f"Hybrid fusion returned: {len(hybrid_results)} chunks")
+                
+                all_hybrid_results.append(hybrid_results)
+            
+            # Stage 2: Cross-query fusion (equal weights across queries by default)
+            print(f"\nFinal RRF fusion across {len(all_hybrid_results)} queries")
+            chunks = rrf_rank_and_fuse(all_hybrid_results)
+            print(f"📊 Final result: {len(chunks)} chunks")
         
+
+        # 5. Trim to final context size
+        chunks = chunks[:settings['final_context_size']]
+        print(f"Trimmed to final context size: {len(chunks)} chunks")
+
+        # 6. Build context from retrieved chunks
+        texts, images, tables, citations = build_context(chunks) 
+        # validate_context(texts, images, tables, citations)
+        
+        # 7. Build system prompt with injected context
+        print(f"🤖 Preparing context and calling LLM...") 
+        ai_response = prepare_prompt_and_invoke_llm( 
+            user_query=message, 
+            texts=texts, 
+            images=images, 
+            tables=tables 
+        )
+        
+        # 8. Save AI message with citations to database        
+        print(f"💾 Saving AI message...")
+
         ai_message_result = supabase.table('messages').insert({
             "chat_id": chat_id,
             "content": ai_response,
@@ -414,7 +534,6 @@ async def send_message(
         ai_message = ai_message_result.data[0]
         print(f"✅ AI message saved: {ai_message['id']}")
         
-        # 4. Return data
         return {
             "message": "Messages sent successfully",
             "data": {

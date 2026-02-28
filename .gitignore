@@ -61,3 +61,16 @@ htmlcov/
 
 # FastAPI specific
 .pytest_cache
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# API keys and secrets
+secrets/
+*.pem
+*.key
+
+# Jupyter Notebook
+.ipynb_checkpoints

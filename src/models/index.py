@@ -60,3 +60,11 @@ class MessageRole(str, Enum):
 
 class QueryVariations(BaseModel):
     queries: List[str] = Field(..., description="The variations of the query")
+
+
+class InputGuardrailCheck(BaseModel):
+    is_toxic: bool = Field(..., description="Whether the input contains toxic content")
+    is_prompt_injection: bool = Field(..., description="Whether the input contains prompt injection")
+    contains_pii: bool = Field(..., description="Whether the input contains PII")
+    is_safe: bool = Field(..., description="Whether the input is safe overall")
+    reason: Optional[str] = Field(None, description="Reason if unsafe")

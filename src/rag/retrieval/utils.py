@@ -171,8 +171,10 @@ def prepare_prompt_and_invoke_llm(
         "IMPORTANT RULES:\n"
         "- Only answer based on the provided context (texts, tables, and images)\n"
         "- If the answer cannot be found in the context, respond with: 'I don't have enough information in the provided context to answer that question.'\n"
-        "- Do not use external knowledge or make assumptions beyond what's explicitly stated\n"
+        "- Do NOT use external knowledge, add mechanisms, or elaborate beyond what is explicitly stated in the context\n"
         "- When referencing information, be specific and cite relevant parts of the context\n"
+        "- Provide complete, well-developed answers — do not stop at the first mention when the context supports more detail\n"
+        "- When information about a topic appears across multiple document chunks, synthesize ALL relevant mentions into a comprehensive answer rather than stopping at the first mention\n"
         "- Synthesize information from texts, tables, and images to provide comprehensive answers\n\n"
     )
 

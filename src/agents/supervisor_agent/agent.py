@@ -347,6 +347,9 @@ For every user question:
 4. If the retrieved information fully answers the user's question, respond clearly and completely using that information.  
 5. If the retrieved information is insufficient or incomplete, explicitly state that and provide helpful suggestions or guidance based on what you found.  
 6. Always present answers in a clear, well-structured, and conversational manner.
+7. Structure your response using only the content from the retrieved chunks, do not fabricate information.
+8. Do NOT add explanations, mechanisms, or details beyond what is explicitly in the retrieved text.
+9. When information about a topic appears across multiple document chunks, synthesize ALL relevant mentions into a comprehensive answer rather than stopping at the first mention.
 
 **Never answer without first querying the RAG tool. This ensures every response is grounded in project-specific context and documentation.**"""
     

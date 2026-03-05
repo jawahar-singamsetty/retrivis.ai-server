@@ -1,6 +1,5 @@
-from typing import Any
-
-from fastapi import APIRouter, HTTPException
+from typing import Any, Dict
+from fastapi import APIRouter, HTTPException, Body
 from src.services.supabase import supabase
 from src.config.logging import get_logger  
 
@@ -11,7 +10,7 @@ router = APIRouter(tags=["userRoutes"])
 
 @router.post("")
 @router.post("/create")
-async def create_user(clerk_webhook_data: Any):
+async def create_user(clerk_webhook_data: Dict[str, Any] = Body(...)):
     """
     Payload structure : https://clerk.com/docs/guides/development/webhooks/overview#payload-structure
 

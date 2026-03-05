@@ -490,6 +490,43 @@ async def send_message(
         )
 
 
+@router.get("")
+@router.get("/{project_id}/chunks/{chunk_id}")
+async def get_chunk_content(
+    project_id: str,
+    chunk_id: str,
+    current_user_clerk_id: str = Depends(get_current_user_clerk_id),
+):
+    """Fetch original chunk text for citation popup"""
+    try:
+        result = (
+            supabase.table("document_chunks")
+            .select("id, original_content, page_number, document_id")
+            .eq("id", chunk_id)
+            .execute()
+        )
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Chunk not found")
+        
+        chunk = result.data[0]
+        # Extract text from original_content exactly as build_context_from_retrieved_chunks does
+        original_content = chunk.get("original_content", {})
+        text = original_content.get("text", "") if isinstance(original_content, dict) else ""
+        
+        return {
+            "data": {
+                "content": text,
+                "page_number": chunk.get("page_number"),
+                "document_id": chunk.get("document_id"),
+            }
+        }
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error("chunk_fetch_error", chunk_id=chunk_id, error=str(e), exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("")
 @router.post("/{project_id}/chats/{chat_id}/messages/stream")
 async def stream_message(
@@ -713,3 +750,5 @@ async def stream_message(
             "Connection": "keep-alive",
         }
     )
+
+

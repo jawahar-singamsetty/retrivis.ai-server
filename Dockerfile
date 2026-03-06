@@ -16,8 +16,10 @@ COPY pyproject.toml poetry.lock* ./
 
 RUN poetry config virtualenvs.create false
 
-# ↓ This is the key change — excludes [dev] group
 RUN poetry install --no-interaction --no-ansi --no-root --only main
+
+# Add this line
+RUN python -m nltk.downloader punkt punkt_tab averaged_perceptron_tagger
 
 COPY . .
 

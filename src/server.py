@@ -41,6 +41,17 @@ app.include_router(chatRoutes, prefix="/api/chats")
 
 logger.info("routes_registered", route_count=4)  
 
+@app.get("/")
+async def root():
+    """Root Endpoint"""
+    return {
+        "name": "Retrivis.AI",
+        "version": "1.0.1",
+        "description": "Backend API for Retrivis.AI - A platform for creating and managing your knowledge base",
+        "status": "running",
+        "version": "1.0.1"
+    }
+
 @app.get("/health")
 async def health_check():
     logger.debug("health_check_called")

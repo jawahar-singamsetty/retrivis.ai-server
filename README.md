@@ -12,6 +12,11 @@
 
 ---
 
+##  Live Demo
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Retrivis.AI-ff4d4d?style=flat&logo=vercel&logoColor=white)](https://retrivis-ai-client.vercel.app)
+
+---
+
 ## 📌 Overview
 
 This is the backend service of the **RetrIVis.AI** RAG platform — a production-grade, multimodal Retrieval-Augmented Generation (RAG) system built to handle intelligent querying over text, images, and complex documents. It exposes a structured API that the frontend consumes to run document ingestion, retrieval, and generation workflows.

@@ -42,8 +42,8 @@ results = evaluate(
     metrics=[
         faithfulness, 
         answer_relevancy, 
-        # context_precision, 
-        # context_recall
+        context_precision, 
+        context_recall
     ],
     llm=llm,
     embeddings=embeddings,

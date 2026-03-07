@@ -15,34 +15,10 @@ from src.rag.retrieval.index import retrieve_context
 from src.rag.retrieval.utils import prepare_prompt_and_invoke_llm
 
 # Configuration
-PROJECT_ID = "2bef8f77-64ec-4684-a555-0ebfbb644937"
+PROJECT_ID = "<your project id here>"
 
 TEST_QUESTIONS = [
-    "What is the Big Bang theory?",
-    "How many neurons does the human brain contain?",
-    "Who invented cuneiform writing?",
-    "What percentage of the universe is made up of dark matter?",
-    "What are the main functions of dopamine in the brain?",
-    "When was the Great Pyramid of Giza built?",
-    "What are the three types of omega-3 fatty acids?",
-    "What is the hippocampus responsible for?",
-    "How much fiber should adults consume daily?",
-    "What caused the Bronze Age Collapse?",
-    "What is the difference between saturated and unsaturated fats?",
-    "When were gravitational waves first detected?",
-    "What are the two main divisions of the nervous system?",
-    "What triggered the Arab Spring in 2011?",
-    "Why is vitamin D important for bone health?",
-    "How does cosmic inflation explain the uniformity of the universe?",
-    "What role does the amygdala play in the brain?",
-    "What were the main causes of World War I?",
-    "How do probiotics and prebiotics differ?",
-    "What happens to massive stars at the end of their lives?",
-    "What is neuroplasticity and why is it important?",
-    "What was the significance of the Code of Hammurabi?",
-    "Why are trans fats considered unhealthy?",
-    "What is the relationship between the thalamus and sensory information?",
-    "How did the COVID-19 pandemic affect global economies?"
+    "<add your test questions here>"
 ]
 
 

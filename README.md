@@ -216,7 +216,7 @@ Server runs at `http://localhost:8000` · Docs at `http://localhost:8000/docs`
 ## 🙏 Acknowledgements
 
 Built and maintained by Jawahar Singamsetty.
-Open to AI Engineer roles — feel free to reach out via [LinkedIn](your-url)
+Open to AI Engineer roles — feel free to reach out via [LinkedIn](https://www.linkedin.com/in/jawaharsr)
 
 ---
 

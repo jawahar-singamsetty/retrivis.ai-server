@@ -1,4 +1,4 @@
-# RetrIVis.AI — Multimodal RAG System
+# Retrivis.AI — Multimodal RAG System
 
 > Production-deployed RAG backend supporting text, image, and document queries — powered by GPT-4o LLM with configurable retrieval strategies.
 

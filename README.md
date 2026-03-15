@@ -12,6 +12,8 @@
 
 ---
 
+
+
 ## 📌 Overview
 
 This is the backend service of the **RetrIVis.AI** RAG platform — a production-grade, multimodal Retrieval-Augmented Generation (RAG) system built to handle intelligent querying over text, images, and complex documents. It exposes a structured API that the frontend consumes to run document ingestion, retrieval, and generation workflows.
@@ -204,12 +206,6 @@ Server runs at `http://localhost:8000` · Docs at `http://localhost:8000/docs`
 | `TAVILY_API_KEY` | Used by the Agentic RAG web search tool | [tavily.com](https://tavily.com) → Dashboard → API Key |
 
 </details>
-
----
-
-## 🚀 Live Demo
-
-> 🔗 _[Add your live demo URL here]_
 
 ---
 

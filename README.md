@@ -12,7 +12,7 @@
 
 ---
 
-
+[![Retrivis.AI Demo](assets/screenshot.png)](https://www.loom.com/share/3317906ddbdb420783b6b9361b612d5a)
 
 ## 📌 Overview
 
@@ -29,7 +29,7 @@ Key capabilities:
 
 ---
 
-## 🚀 Live Demo
+## 🚀 Live App link here 👇
 
 🔗 [retrivis-ai-client.vercel.app](https://retrivis-ai-client.vercel.app)
 

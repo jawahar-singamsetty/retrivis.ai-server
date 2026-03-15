@@ -12,7 +12,13 @@
 
 ---
 
-[![Retrivis.AI Demo](assets/screenshot.png)](https://www.loom.com/share/3317906ddbdb420783b6b9361b612d5a)
+[![Retrivis.AI Demo](assets/screenshot.png)](https://retrivis-ai-client.vercel.app)
+
+**👆 Click to explore Retrivis.AI live**
+
+> For demo video click here 👉 [![Retrivis.AI Demo](https://img.shields.io/badge/▶_Watch_Demo-Retrivis.AI-FF0000?style=for-the-badge&logo=loom&logoColor=white)](https://www.loom.com/share/3317906ddbdb420783b6b9361b612d5a)
+
+---
 
 ## 📌 Overview
 

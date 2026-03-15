@@ -1,4 +1,4 @@
-# RetrIVis.AI — Multimodal RAG System
+# Retrivis.AI — Multimodal RAG System
 
 > Production-deployed RAG backend supporting text, image, and document queries — powered by GPT-4o LLM with configurable retrieval strategies.
 
@@ -11,6 +11,8 @@
 [![LangChain](https://img.shields.io/badge/LangChain-RAG_Framework-1C3C3C?style=flat)](https://langchain.com)
 
 ---
+
+
 
 ## 📌 Overview
 
@@ -204,12 +206,6 @@ Server runs at `http://localhost:8000` · Docs at `http://localhost:8000/docs`
 | `TAVILY_API_KEY` | Used by the Agentic RAG web search tool | [tavily.com](https://tavily.com) → Dashboard → API Key |
 
 </details>
-
----
-
-## 🚀 Live Demo
-
-> 🔗 _[Add your live demo URL here]_
 
 ---
 
